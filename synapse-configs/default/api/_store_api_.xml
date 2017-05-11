@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<api xmlns="http://ws.apache.org/ns/synapse" name="_Store_API_" context="/store">
+   <resource methods="GET POST" url-mapping="/*" faultSequence="fault">
+      <inSequence>
+         <send>
+            <endpoint>
+               <http uri-template="https://localhost:9443/store">
+                  <timeout>
+                     <duration>60000</duration>
+                     <responseAction>fault</responseAction>
+                  </timeout>
+               </http>
+            </endpoint>
+         </send>
+      </inSequence>
+      <outSequence>
+         <!-- Handle redirections -->
+         <filter source="$trp:Location" regex=".+">
+            <property name="Location_Path" expression="$trp:Location" pattern="(^http.?://\b)(.*):(\d*)(.*)" group="4" />            
+            <!-- Rewrite location header -->
+            <property name="Location" expression="$ctx:Location_Path" scope="transport" />   
+            <log level="custom">
+               <property name="location" expression="$trp:Location" />
+            </log>
+         </filter>
+         <send />
+      </outSequence>
+   </resource>
+</api>
